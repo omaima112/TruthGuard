@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TruthGuard - AI Fake News Detector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --green-primary: #10b981;
+            --green-dark: #059669;
+            --gold: #f59e0b;
+            --white: #ffffff;
+            --light-bg: #f0fdf4;
+            --text-dark: #1f2937;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+           background: linear-gradient(135deg, #0f766e 0%, #10b981 50%, #059669 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .shield-icon {
+            font-size: 60px;
+        }
+
+        h1 {
+            color: var(--gold);
+            font-size: 3em;
+            font-weight: 700;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, var(--green-dark), var(--green-primary));
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .tagline {
+            color: var(--gold);
+            font-size: 1.2em;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-dark);
+            margin-top: 10px;
+            font-size: 1.1em;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(16, 185, 129, 0.1);
+            border: 3px solid var(--green-primary);
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            color: var(--green-dark);
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--green-primary);
+            border-radius: 12px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, var(--green-primary), var(--green-dark));
+            color: white;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .clear-btn {
+            background: white;
+            color: var(--green-dark);
+            border: 2px solid var(--green-primary);
+        }
+
+        .clear-btn:hover {
+            background: var(--light-bg);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .loading.active {
+            display: block;
+            animation: pulse 1.5s ease infinite;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--light-bg);
+            border-top: 5px solid var(--green-primary);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            animation: spin 1s linear infinite;
+        }
+
+        .result-card {
+            display: none;
+            margin-top: 30px;
+            padding: 30px;
+            border-radius: 15px;
+            border: 3px solid;
+            animation: slideIn 0.5s ease;
+        }
+
+        .result-card.active {
+            display: block;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .result-icon {
+            font-size: 50px;
+        }
+
+        .verdict {
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .confidence {
+            font-size: 1.3em;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+
+        .probabilities {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .prob-card {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .prob-label {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .prob-value {
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .examples {
+            margin-top: 40px;
+            padding: 30px;
+            background: var(--light-bg);
+            border-radius: 15px;
+            border: 2px solid var(--green-primary);
+        }
+
+        .examples h3 {
+            color: var(--green-dark);
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .example-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border-left: 4px solid var(--gold);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .example-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: var(--text-dark);
+        }
+
+        .tech-badge {
+            display: inline-block;
+            background: var(--green-primary);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+                color: white;
+            }
+            .main-card {
+                padding: 25px;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+            .probabilities {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <span class="shield-icon">🛡️</span>
+            </div>
+            <h1>TruthGuard</h1>
+            <p class="tagline">Your Shield Against Misinformation</p>
+            <p class="subtitle">Powered by Advanced AI & Machine Learning</p>
+        </header>
+
+        <div class="main-card">
+            <div class="input-section">
+                <label for="claimInput">Enter a claim, news headline, or statement to verify:</label>
+                <textarea 
+                    id="claimInput" 
+                    placeholder="Example: Scientists discover miracle cure that doctors don't want you to know about..."
+                ></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="analyze-btn" onclick="analyzeClaim()">
+                    🔍 Analyze Claim
+                </button>
+                <button class="clear-btn" onclick="clearAll()">
+                    🗑️ Clear
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p style="color: var(--green-dark); font-weight: 600;">Analyzing with AI...</p>
+            </div>
+
+            <div class="result-card" id="resultCard">
+                <div class="result-header">
+                    <span class="result-icon" id="resultIcon"></span>
+                    <div>
+                        <div class="verdict" id="verdict"></div>
+                        <div class="confidence" id="confidence"></div>
+                    </div>
+                </div>
+                
+                <div class="probabilities">
+                    <div class="prob-card" style="border-left: 4px solid #10b981;">
+                        <div class="prob-label" style="color: #10b981;">✓ Real Probability</div>
+                        <div class="prob-value" id="realProb" style="color: #10b981;"></div>
+                    </div>
+                    <div class="prob-card" style="border-left: 4px solid #ef4444;">
+                        <div class="prob-label" style="color: #ef4444;">✗ Fake Probability</div>
+                        <div class="prob-value" id="fakeProb" style="color: #ef4444;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       <div class="examples">
+    <h3>🧪 Try These Examples:</h3>
+    <div class="example-item" onclick="fillExample(0)">
+        💊 "Scientists discover miracle cure that doctors don't want you to know about"
+        <span style="color:#ef4444; font-weight:600;">(Fake)</span>
+    </div>
+    <div class="example-item" onclick="fillExample(1)">
+        📰 "Regular exercise contributes to better cardiovascular health according to research"
+        <span style="color:#10b981; font-weight:600;"></span>
+    </div>
+    <div class="example-item" onclick="fillExample(2)">
+        🎯 "This one weird trick will make you rich overnight"
+        <span style="color:#f97316; font-weight:600;">(Suspicious)</span>
+    </div>
+    <div class="example-item" onclick="fillExample(3)">
+        🌿 "Planting trees helps reduce carbon footprint and improve air quality"
+        <span style="color:#22c55e; font-weight:600;">(True)</span>
+    </div>
+
+    
+
+    <div class="example-item" onclick="fillExample(5)">
+        💸 "AI may automate some jobs but create new ones in tech and ethics"
+        <span style="color:#10b981; font-weight:600;">(Credible)</span>
+    </div>
+</div>
+
+        <footer>
+            <p style="font-weight: 600; margin-bottom: 15px;">Built with:</p>
+            <span class="tech-badge">Python</span>
+            <span class="tech-badge">Flask</span>
+            <span class="tech-badge">Scikit-learn</span>
+            <span class="tech-badge">NLP</span>
+            <span class="tech-badge">Machine Learning</span>
+            <p style="margin-top: 20px;">© 2024 TruthGuard | Fighting Misinformation with AI</p>
+        </footer>
+    </div>
+
+    <script>
+        const examples = [
+             "Scientists discover miracle cure that doctors don't want you to know about",
+    "Regular exercise contributes to better cardiovascular health according to research",
+    "This one weird trick will make you rich overnight",
+    "Planting trees helps reduce carbon footprint and improve air quality",
+    "Aliens secretly run the United Nations",
+    "AI may automate some jobs but create new ones in tech and ethics"
+        ];
+
+        function fillExample(index) {
+            document.getElementById('claimInput').value = examples[index];
+            document.getElementById('claimInput').focus();
+        }
+
+        function clearAll() {
+            document.getElementById('claimInput').value = '';
+            document.getElementById('resultCard').classList.remove('active');
+        }
+
+        async function analyzeClaim() {
+            const claim = document.getElementById('claimInput').value.trim();
+            
+            if (!claim || claim.length < 10) {
+                alert('Please enter a claim with at least 10 characters!');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('resultCard').classList.remove('active');
+            document.querySelector('.analyze-btn').disabled = true;
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ claim: claim })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Analysis failed');
+                }
+
+                const data = await response.json();
+                displayResult(data);
+            } catch (error) {
+                alert('Error analyzing claim. Please try again!');
+                console.error(error);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+                document.querySelector('.analyze-btn').disabled = false;
+            }
+        }
+
+        function displayResult(data) {
+            const resultCard = document.getElementById('resultCard');
+            const colors = {
+                'green': '#10b981',
+                'lightgreen': '#22c55e',
+                'yellow': '#f59e0b',
+                'orange': '#f97316',
+                'red': '#ef4444'
+            };
+
+            const icons = {
+                'green': '✅',
+                'lightgreen': '✓',
+                'yellow': '⚠️',
+                'orange': '⚠️',
+                'red': '❌'
+            };
+
+            const color = colors[data.color] || '#6b7280';
+            const icon = icons[data.color] || '•';
+
+            resultCard.style.borderColor = color;
+            resultCard.style.background = `linear-gradient(135deg, ${color}15, ${color}05)`;
+            
+            document.getElementById('resultIcon').textContent = icon;
+            document.getElementById('verdict').textContent = data.verdict;
+            document.getElementById('verdict').style.color = color;
+            document.getElementById('confidence').textContent = `Confidence: ${data.confidence}%`;
+            document.getElementById('confidence').style.color = color;
+            document.getElementById('realProb').textContent = `${data.real_probability}%`;
+            document.getElementById('fakeProb').textContent = `${data.fake_probability}%`;
+
+            resultCard.classList.add('active');
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('claimInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                analyzeClaim();
+            }
+        });
+    </script>
+</body>
+</html>
